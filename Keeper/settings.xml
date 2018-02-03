@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Settings>
+    <Smtp>
+        <!-- SMTPアカウントを表す名前です。 -->
+        <name></name>
+        <!-- SMTPアカウント名 -->
+        <account></account>
+        <!-- SMTPパスワード -->
+        <password></password>
+        <!-- SMTPホスト名 -->
+        <host></host>
+        <!-- 送信先メールアドレス-->
+        <address></address>
+        <!-- 送信元メールアドレス -->
+        <source></source>
+    </Smtp>
+    <Config>
+        <!-- 送信予定分 -->
+	    <send_min></send_min>
+        <!-- 許容する送信予定分のリスト -->
+        <allowance_min_list></allowance_min_list>
+        <!-- 現在時刻と受信メールの時間がどの程度(分)ずれている場合に処理を行うか？ -->
+        <trial_period></trial_period>
+        <!-- 受信メールのテキストファイルが保存されているファイルパス -->
+        <mailtext_path></mailtext_path>
+    </Config>
+</Settings>
