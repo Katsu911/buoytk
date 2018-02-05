@@ -24,11 +24,18 @@ func isRightMin(min int, MinList string) bool{
 	return false
 }
 
+func IsLateValue(v int)bool{
+	const UpperLateRange=1800
+	const LowerLateRange=-1800
+
+	if v>=LowerLateRange && v<=UpperLateRange{
+		return true
+	}
+	return false
+}
+
 func TestisRightMin(t *testing.T) {
-	src := "11,12,13,14,15,16,17,18,19,20," +
-		"21,22,23,24,25,26,27,28,29,30," +
-		"31,32,33,34,35,36,37,38,39,40," +
-		"50,51,52,53,54,55,56,57,58,59"
+	src := "50,51,52,53,54,55,56,57,58,59"
 	actual := isRightMin(55, src)
 	expected := false
 	if actual != expected {
@@ -48,7 +55,7 @@ func TestisRightMin(t *testing.T) {
 	}
 
 	actual = isRightMin(22, src)
-	expected = false
+	expected = true
 	if actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -242,7 +249,7 @@ func isAlreadySendSettingMail()bool {
 func IsSendingPeriod(v int)bool{
 
 	const UpperModeRange=6
-	const LowerModeRange=0
+	const LowerModeRange=1
 
 	if v>=LowerModeRange && v<=UpperModeRange{
 		return true
@@ -252,7 +259,7 @@ func IsSendingPeriod(v int)bool{
 
 func IsMailAddress(address string)bool{
 
-	var email_pattern = `^(?i:[^ @"<>]+|".*")@(?i:[a-z1-9.])+.(?i:[a-z])+$`
+	var email_pattern = `^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$`
 	var email_re = regexp.MustCompile(email_pattern)
 	const MAX_MAIL_ADDRESS_LENGTH = 100
 

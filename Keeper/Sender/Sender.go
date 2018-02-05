@@ -12,7 +12,7 @@ import (
 func logingSendMail(f string){
 	file, err := os.Create(f)
 	if err != nil {
-		log.Printf(",200,メール送信履歴を書きこめませんでした。（ファイル名:%s）\n", f)
+		log.Printf(",102,メール送信履歴を書きこめませんでした。（ファイル名:%s）\n", f)
 	}
 	defer file.Close()
 
@@ -37,12 +37,16 @@ func SendStringByMail(mes string, server Settings.Smtp) {
 		server.Host,
 	)
 
+	const MIME_TYPE="MIME-Version: 1.0\r\n"
+	const CONTENT_TYPE="Content-Type: text/plain; charset=\"iso-2022-jp\"\r\n"
+	const TRANSFER="Content-Transfer-Encoding: 7bit\r\n"
+
 	err := smtp.SendMail(
 		server.Host+":587",
 		auth,
 		server.Source,
 		[]string{server.Address},
-		[]byte(mes),
+		[]byte( MIME_TYPE + CONTENT_TYPE + TRANSFER + mes),
 	)
 	if err != nil {
 		log.Printf(",101,メール送信に失敗しました（Host:%s To:%s  Body:%s）\n", server.Host, server.Address, mes)
