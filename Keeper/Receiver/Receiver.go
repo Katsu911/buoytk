@@ -1,5 +1,6 @@
 package  Receiver
 
+//Module:300
 import (
 	"time"
 	"os"
@@ -7,6 +8,7 @@ import (
 	"strings"
 	"strconv"
 	"log"
+	_"fmt"
 )
 
 func Month2Number(mon string) int{
@@ -29,46 +31,102 @@ func Month2Number(mon string) int{
 	return month
 }
 
-func setDateTime(dt string) time.Time{
+func setDateTime(dt string) (time.Time,bool){
 
+	hasError:=false
+	d1,d2,d3,t1,t2 :=0,0,0,0,0
 	//Date: Fri, 2 Sep 2016 16:36:54 +0900
 	c1:=strings.Split(dt," ")
-	//日時
-	t:=strings.Split(c1[5],":")
+	if len(c1) < 6 {hasError=true}
+	if false==hasError{
+		d1, _ = strconv.Atoi(c1[4])	//2016
+		d2 = Month2Number(c1[3])	//Sep
+		d3, _ = strconv.Atoi(c1[2])	//2
 
-	d1,_ :=strconv.Atoi(c1[4])
-	d2:= Month2Number(c1[3])
-	d3,_ :=strconv.Atoi(c1[2])
-	t1,_ :=strconv.Atoi(t[0])
-	t2,_ :=strconv.Atoi(t[1])
+		if d1>=1970 && d1<=2200 {
+		}else{hasError=true}
+		if d2>=1 && d2<=12 {
+		}else{hasError=true}
+		if d3>=1 && d3<=31 {
+		}else{hasError=true}
 
-	return time.Date(d1, time.Month(d2), d3, t1, t2, 0, 0, time.UTC)
-}
-
-func GetRecentMailDateTime(path string) time.Time{
-
-	fp, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer fp.Close()
-
-	var SendingDate string
-
-	scanner := bufio.NewScanner(fp)
-	for scanner.Scan() {
-
-		str := scanner.Text()
-		if "Date:" == str[0:5] {
-			//Date: Thu, 1 Feb 2018 18:58:57 +0900
-			SendingDate = scanner.Text()
+		t:=strings.Split(c1[5],":")	//16:36:54
+		if len(t) < 2 {	hasError = true}
+		if false==hasError {
+			t1, _ = strconv.Atoi(t[0])	//16
+			t2, _ = strconv.Atoi(t[1])	//36
+			if t1>=0 && t1<=24 {
+			}else{hasError=true}
+			if t2>=0 && t2<=59 {
+			}else{hasError=true}
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	if hasError{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
 	}
 
-	log.Printf("RecentSendingDateTime was %s.",SendingDate )
+	return time.Date(d1, time.Month(d2), d3, t1, t2, 0, 0, loc),false
+}
 
-	return setDateTime(SendingDate)
+// Readln returns a single line (without the ending \n)
+// from the input buffered reader.
+// An error is returned iff there is an error with the
+// buffered reader.
+func Readln(r *bufio.Reader) (string, error) {
+	var (
+		isPrefix bool  = true
+		err      error = nil
+		line, ln []byte
+	)
+	for isPrefix && err == nil {
+		line, isPrefix, err = r.ReadLine()
+		ln = append(ln, line...)
+	}
+	return string(ln), err
+}
+
+func newFile(fn string) *os.File {
+	fp, err := os.OpenFile(fn, os.O_RDONLY, 0644)
+	if err != nil {
+		log.Println(",300,受信データファイルの展開中にエラーが発生しました。")
+	}
+	return fp
+}
+
+func GetRecentMailDateTime(path string) (time.Time, bool){
+
+	fp := newFile(path)
+	defer fp.Close()
+	reader := bufio.NewReader(fp)
+	str, err := Readln(reader)
+	SendingDate :=""
+	if err != nil {
+		log.Println(",301,受信データファイルの読込中にエラーが発生しました。")
+	}
+	for err == nil {
+		//fmt.Println(str)
+		str, err = Readln(reader)
+		if 5 <= len(str) {
+			if "Date:" == str[0:5] {
+				//Date: Thu, 1 Feb 2018 18:58:57 +0900
+				SendingDate = str
+			}
+		}
+	}
+
+	log.Printf(",302,最後に受信したメールの送信日付は、%s でした。",SendingDate )
+
+	if ""==SendingDate{
+		log.Println(",303,読み込んだファイルに日時データがありませんでした。" )
+		loc, _ := time.LoadLocation("Asia/Tokyo")
+		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
+	}
+	tm,hasErr:=setDateTime(SendingDate)
+	if hasErr{
+		loc, _ := time.LoadLocation("Asia/Tokyo")
+		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
+	}
+	return tm,false
 }

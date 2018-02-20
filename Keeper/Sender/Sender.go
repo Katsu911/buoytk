@@ -1,5 +1,5 @@
 package Sender
-
+//Module:100
 import (
 	"../Settings"
 	"net/smtp"
@@ -7,15 +7,18 @@ import (
 	"os"
 	"time"
 	"strconv"
+	"bufio"
 )
 
-func logingSendMail(f string){
-	file, err := os.Create(f)
+func writeSendingRecord(f string){
+
+	fp , err := os.Create(f) //上書き保存
 	if err != nil {
 		log.Printf(",102,メール送信履歴を書きこめませんでした。（ファイル名:%s）\n", f)
 	}
-	defer file.Close()
+	defer fp.Close()
 
+	writer :=bufio.NewWriter(fp)
 	tm:=time.Now()
 	ye, mo, da := tm.Date()
 	output := strconv.Itoa(ye) + "," +
@@ -25,7 +28,11 @@ func logingSendMail(f string){
 	strconv.Itoa(tm.Minute()) + "," +
 	strconv.Itoa(tm.Second())
 
-	file.Write(([]byte)(output))
+	_, err = writer.WriteString(output)
+	if err != nil {
+		log.Printf(",102,メール送信履歴を書きこめませんでした。（ファイル名:%s）\n", f)
+	}
+	writer.Flush()
 }
 
 func SendStringByMail(mes string, server Settings.Smtp) {
@@ -52,7 +59,7 @@ func SendStringByMail(mes string, server Settings.Smtp) {
 		log.Printf(",101,メール送信に失敗しました（Host:%s To:%s  Body:%s）\n", server.Host, server.Address, mes)
 		return
 	}
-	logingSendMail("SendingHistoryOfSettingMail")
+	writeSendingRecord("SendingHistoryOfSettingMail")
 	log.Printf(",100,メールを送信しました。（Host:%s To:%s  Body:%s）\n", server.Host, server.Address, mes)
 	return
 }
