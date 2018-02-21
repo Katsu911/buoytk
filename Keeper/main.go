@@ -11,6 +11,7 @@ import (
 	"math"
 	"strconv"
 	"fmt"
+	"time"
 )
 
 var (
@@ -27,7 +28,8 @@ var (
 	VoltOpt  = flag.String("v", "", "vオプション:電圧制御[定義域:ON or OFF] 例) -v ON")
 	HalfOpt  = flag.String("h", "", "hオプション:送信回数[定義域:ON or OFF] 例) -h ON")
 	XOpt  = flag.Float64("extension", math.MaxFloat64, "xオプション:動作停止電圧[定義域:7.0～12.0] 例) -x 10.5\n注:電圧制御のしきい値が現在の電圧を下回ると動作停止します。(=遠隔では制御不能になります。)")
-	TestOpt  = flag.String("optional", "", "任意の設定データ送信オプション: 例) -optional")
+	TestOpt  = flag.String("optional", "", "optionalオプション：任意の設定データを送信する。: 例) -optional")
+	TimeOpt  = flag.Bool("time", false, "timeオプション：システムから正常な時間が得られるかを確認する。: 例) -time")
 )
 
 func main() {
@@ -43,12 +45,12 @@ func main() {
 			log.Println(",002,送信間隔変更の設定が実行できませんでした。")
 		}
 	} else if *LateOpt {
-		RecentMailDateTime,hasErr := Receiver.GetRecentMailDateTime(Settings.SettingsXml.Config.MailtextPath)
+		NewDT,OldDT,hasErr := Receiver.GetRecentMailDateTime(Settings.SettingsXml.Config.MailtextPath)
 		if hasErr {
 			log.Println(",004,遅延補正が実行できませんでした。")
 			return
 		}
-		isAction, AdjustmentSec := Verifier.GetSettingsSec(RecentMailDateTime, Settings.SettingsXml.Config)
+		isAction, AdjustmentSec := Verifier.GetSettingsSec(NewDT,OldDT,Settings.SettingsXml.Config)
 		if isAction {
 			log.Printf(",003,遅延補正が実行されました。（設定秒数：%d秒）\n", AdjustmentSec)
 			Sender.SendStringByMail("$L,"+strconv.Itoa(AdjustmentSec), Settings.SettingsXml.Smtp)
@@ -65,9 +67,10 @@ func main() {
 	}else if *LateOnPipeOpt{
 		var stdin string
 		fmt.Scan(&stdin)
-		tm, isOK := Verifier.IsLateDateTime(stdin)
+		//
+		old,new,isOK := Verifier.IsLateDateTime(stdin)
 		if isOK {
-			isAction, AdjustmentSec := Verifier.GetSettingsSec(tm, Settings.SettingsXml.Config)
+			isAction, AdjustmentSec := Verifier.GetSettingsSec(old,new, Settings.SettingsXml.Config)
 			if isAction {
 				log.Printf(",003,遅延補正が実行されました。（設定秒数：%d秒）\n", AdjustmentSec)
 				Sender.SendStringByMail("$L,"+strconv.Itoa(AdjustmentSec), Settings.SettingsXml.Smtp)
@@ -153,5 +156,7 @@ func main() {
 	} else if "" != *TestOpt {
 		log.Println(",025,テスト用に入力したデータの送信が実行されました。",)
 		Sender.SendStringByMail(*TestOpt, Settings.SettingsXml.Smtp)
+	}else if *TimeOpt {
+		log.Printf(",026,現在のシステム日時は、%s です。",time.Now().String())
 	}
 }

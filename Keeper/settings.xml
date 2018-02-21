@@ -21,7 +21,11 @@
         <allowance_min_list></allowance_min_list>
         <!-- 現在時刻と受信メールの時間がどの程度(分)ずれている場合に処理を行うか？ -->
         <trial_period></trial_period>
+        <!-- 必要な受信メール間の送信間隔(分) -->
+        <retransmission_interval></retransmission_interval>
         <!-- 受信メールのテキストファイルが保存されているファイルパス -->
+        <!--(例) /user/maildata (Linux)-->
+        <!--(例) C:\Users\test\maildata (Windows)-->        
         <mailtext_path></mailtext_path>
     </Config>
 </Settings>

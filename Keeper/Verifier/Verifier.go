@@ -11,51 +11,84 @@ import( "time"
 )
 
 
-func IsLateDateTime(dt string)(time.Time, bool){
+func isNormalSendingInterval( old time.Time, new time.Time, ival int)bool{
 
-	d1,d2,d3,t1,t2:=0,0,0,0,0
+	duration := new.Sub(old)
+	MailRecvMinInterval := duration / time.Minute
+
+	if ival < (int)(MailRecvMinInterval) {
+		log.Println(",208,最新の受信メールと1つ前の受信メールの送信間隔が短すぎます。(=想定外の時間帯にブイの電源が入ってメール送信した可能性がある。)")
+		return false
+	}
+	return true
+
+}
+
+func IsLateDateTime(dt string)(time.Time, time.Time, bool){
+	parts := make([][]int, 2)
+	for i := range parts {
+		parts[i] = make([]int, 5)
+	}
 	loc, _ := time.LoadLocation("Asia/Tokyo")
-	// yyyy-MM-ddTHH:mm:ss(ISO8601)
-	c1:=strings.Split(dt,"-")
-	isNormalTime:=true
-	if len(c1) < 3 {isNormalTime=false}
-	if isNormalTime{
-		d1,_ =strconv.Atoi(c1[0])
-		d2,_ =strconv.Atoi(c1[1])
-		if d1>=1970 && d1<=2200 {
-		}else{isNormalTime=false}
-		if d2>=1 && d2<=12 {
-		}else{isNormalTime=false}
+	dummyTime := time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
+	// yyyy-MM-ddTHH:mm:ss,yyyy-MM-ddTHH:mm:ss		//※フォーマットは、ISO8601形式
+	// (1)最新から2番目に古い受信メール、(2) 最新の受信メール
+	tmp:=strings.Split(dt,",")	//yyyy-MM-ddTHH:mm:ss,yyyy-MM-ddTHH:mm:ss
+	if len(tmp) < 2{
+		log.Println(",207,パイプで受け取った日時データに誤りがあります。")
+		return dummyTime,dummyTime,false
+	}
+	for i:=0;i<2;i++ {
+		c1 := strings.Split(tmp[i], "-")	//yyyy-MM-ddTHH:mm:ss
+		if len(c1) < 3 {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
+		parts[i][0], _ = strconv.Atoi(c1[0])
+		parts[i][1], _ = strconv.Atoi(c1[1])
+		if parts[i][0] >= 1970 && parts[i][0] <= 2200 {
+		} else {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
+		if parts[i][1] >= 1 && parts[i][1]  <= 12 {
+		} else {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
 
-		c2 := strings.Split(c1[2], "T")
-		if len(c2) < 2 {isNormalTime=false}
-		if isNormalTime {
-			d3, _ = strconv.Atoi(c2[0])
-			if d3 >= 1 && d3 <= 31 {
-			} else {
-				isNormalTime = false
-			}
+		c2 := strings.Split(c1[2], "T")	//ddTHH:mm:ss
+		if len(c2) < 2 {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
+		parts[i][2], _ = strconv.Atoi(c2[0])	//dd
+		if parts[i][2] >= 1 && parts[i][2] <= 31 {
+		} else {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
 
-			t := strings.Split(c2[1], ":")
-			t1, _ = strconv.Atoi(t[0])
-			t2, _ = strconv.Atoi(t[1])
-			if t1 >= 0 && t1 <= 24 {
-			} else {
-				isNormalTime = false
-			}
-			if t2 >= 0 && t2 <= 59 {
-			} else {
-				isNormalTime = false
-			}
+		t := strings.Split(c2[1], ":")	//HH:mm:ss
+		parts[i][3], _ = strconv.Atoi(t[0])
+		parts[i][4], _ = strconv.Atoi(t[1])
+		if parts[i][3] >= 0 && parts[i][3] <= 24 {
+		} else {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
+		}
+		if parts[i][4] >= 0 && parts[i][4] <= 59 {
+		} else {
+			log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",parts[i][0],parts[i][1],parts[i][2],parts[i][3],parts[i][4])
+			return dummyTime,dummyTime,false
 		}
 	}
 
-	if isNormalTime{
-		return time.Date(d1, time.Month(d2), d3, t1, t2, 0, 0, loc),true
+	old := time.Date(parts[0][0], time.Month(parts[0][1]), parts[0][2], parts[0][3], parts[0][4], 0, 0, loc)
+	new := time.Date(parts[1][0], time.Month(parts[1][1]), parts[1][2], parts[1][3], parts[1][4], 0, 0, loc)
+	return old,new,true
 	}
-	log.Printf(",206,パイプで受け取った日時データに誤りがあります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
-	return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),false
-}
+
 
 
 
@@ -165,7 +198,6 @@ func isAlreadySendSettingMail(tmstr string, isOK bool)bool {
 			day := time.Date(y, mm, d, h, mmm, s, 0, loc)
 			duration := now.Sub(day)
 			MailRecvMinDiff = (int)(duration/time.Minute)
-			log.Printf("MailRecvMinDiff:%d\n", MailRecvMinDiff)
 			if MailRecvMinDiff > MAIL_SENDING_PERIOD_MIN {
 				log.Printf(",205,設定メールを送信済みです。%d 分以上間隔をあけて実行してください。\n", MAIL_SENDING_PERIOD_MIN)
 				return false
@@ -244,19 +276,22 @@ func IsTerminationVoltage(v float64)bool{
 	return false
 }
 
-func GetSettingsSec(t time.Time, d Settings.Config)(bool, int){
+func GetSettingsSec(old time.Time, new time.Time, d Settings.Config)(bool, int){
 
 	//最新の受信メールの送信時間は設定変更すべき時間帯(分)のものであるか？
 	isAction := true
-	if isNormalMin(t.Minute(), d.AllowanceMinList){isAction=false}
+	if isNormalMin(new.Minute(), d.AllowanceMinList){isAction=false}
 
 	//最新のメール受信データが想定よりも過去のメールか？
-	if isRecvMailPaster(t, d.TrialPeriod){isAction=false}
+	if isRecvMailPaster(new, d.TrialPeriod){isAction=false}
+
+	//受信メールと受信メールの送信間隔が設定値より大きいか？
+	if isNormalSendingInterval(old,new,d.RetransmissionInterval){isAction=false}
 
 	//既に設定メールを送っていないか？
 	//2018,2,4,15,0,0
 	tmstr,isOK:=getRecentFile("SendingHistoryOfSettingMail")
 	if isAlreadySendSettingMail(tmstr,isOK){isAction=false}
 
-	return isAction,getAdjustmentMin(t.Minute(),d.SendMin)*60
+	return isAction,getAdjustmentMin(new.Minute(),d.SendMin)*60
 }

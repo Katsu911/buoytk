@@ -139,25 +139,56 @@ func TestIsLateValue(t *testing.T) {
 	}
 }
 
-func TestIsLateDateTime(t *testing.T) {
+func TestisNormalSendingInterval(t *testing.T) {
+
 	loc, _ := time.LoadLocation("Asia/Tokyo")
-	actual,actual2 := IsLateDateTime("2017-12-31T12:23:21")
-	expected, expected2 := time.Date(2017, 12, 31, 12, 23, 0, 0, loc),true
-	if 0 != actual.Sub(expected) {
+	old := time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
+	new := time.Date(2018, 2, 21, 12, 30, 0, 0, loc)
+
+	actual:= isNormalSendingInterval(old, new,25)
+	expected := true
+	if  actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
-	}
-	if actual2 != expected2 {
-		t.Errorf("got %v\nwant %v", actual2, expected2)
 	}
 
-	actual,actual2 = IsLateDateTime("2017/3/21 10:21:00")
-	expected =time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
-	expected2 = false
+	old = time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
+	new = time.Date(2018, 2, 21, 12, 15, 0, 0, loc)
+
+	actual= isNormalSendingInterval(old, new,25)
+	expected = false
+	if  actual != expected {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+
+}
+
+func TestIsLateDateTime(t *testing.T) {
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	old := time.Date(2017, 12, 31, 12, 23, 0, 0, loc)
+	new := time.Date(2017, 12, 31, 12, 53, 0, 0, loc)
+	dummy := time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
+	actual,actual2, actual3 := IsLateDateTime("2017-12-31T12:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 := old,new,true
 	if 0 != actual.Sub(expected) {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
-	if actual2 != expected2 {
+	if 0 != actual2.Sub(expected2) {
 		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual,actual2,actual3 = IsLateDateTime("2017/3/21 10:21:00,2017/3/21 10:51:00")
+	expected, expected2,expected3 = dummy,dummy,false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
 	}
 
 }

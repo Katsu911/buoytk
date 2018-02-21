@@ -32,39 +32,53 @@ func Month2Number(mon string) int{
 }
 
 func setDateTime(dt string) (time.Time,bool){
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	dummy:= time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
 
-	hasError:=false
 	d1,d2,d3,t1,t2 :=0,0,0,0,0
 	//Date: Fri, 2 Sep 2016 16:36:54 +0900
 	c1:=strings.Split(dt," ")
-	if len(c1) < 6 {hasError=true}
-	if false==hasError{
-		d1, _ = strconv.Atoi(c1[4])	//2016
-		d2 = Month2Number(c1[3])	//Sep
-		d3, _ = strconv.Atoi(c1[2])	//2
-
-		if d1>=1970 && d1<=2200 {
-		}else{hasError=true}
-		if d2>=1 && d2<=12 {
-		}else{hasError=true}
-		if d3>=1 && d3<=31 {
-		}else{hasError=true}
-
-		t:=strings.Split(c1[5],":")	//16:36:54
-		if len(t) < 2 {	hasError = true}
-		if false==hasError {
-			t1, _ = strconv.Atoi(t[0])	//16
-			t2, _ = strconv.Atoi(t[1])	//36
-			if t1>=0 && t1<=24 {
-			}else{hasError=true}
-			if t2>=0 && t2<=59 {
-			}else{hasError=true}
-		}
-	}
-	loc, _ := time.LoadLocation("Asia/Tokyo")
-	if hasError{
+	if len(c1) < 6 {
 		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
-		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
+		return dummy,true
+}
+	d1, _ = strconv.Atoi(c1[4])	//2016
+	d2 = Month2Number(c1[3])	//Sep
+	d3, _ = strconv.Atoi(c1[2])	//2
+
+	if d1>=1970 && d1<=2200 {
+	}else{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
+	}
+	if d2>=1 && d2<=12 {
+	}else{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
+	}
+	if d3>=1 && d3<=31 {
+	}else{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
+	}
+
+	t:=strings.Split(c1[5],":")	//16:36:54
+	if len(t) < 2 {
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
+	}
+
+	t1, _ = strconv.Atoi(t[0])	//16
+	t2, _ = strconv.Atoi(t[1])	//36
+	if t1>=0 && t1<=24 {
+	}else{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
+	}
+	if t2>=0 && t2<=59 {
+	}else{
+		log.Printf(",304,受信日時に採用したデータに異常があります。%d/%d/%d %d:%d\n",d1,d2,d3,t1,t2)
+		return dummy,true
 	}
 
 	return time.Date(d1, time.Month(d2), d3, t1, t2, 0, 0, loc),false
@@ -95,13 +109,16 @@ func newFile(fn string) *os.File {
 	return fp
 }
 
-func GetRecentMailDateTime(path string) (time.Time, bool){
+func GetRecentMailDateTime(path string) (time.Time,time.Time,bool){
 
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	dummy := time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
 	fp := newFile(path)
 	defer fp.Close()
 	reader := bufio.NewReader(fp)
 	str, err := Readln(reader)
-	SendingDate :=""
+	SendingDateNew :=""
+	SendingDateOld :=""
 	if err != nil {
 		log.Println(",301,受信データファイルの読込中にエラーが発生しました。")
 	}
@@ -111,22 +128,22 @@ func GetRecentMailDateTime(path string) (time.Time, bool){
 		if 5 <= len(str) {
 			if "Date:" == str[0:5] {
 				//Date: Thu, 1 Feb 2018 18:58:57 +0900
-				SendingDate = str
+				SendingDateOld = SendingDateNew
+				SendingDateNew = str
 			}
 		}
 	}
 
-	log.Printf(",302,最後に受信したメールの送信日付は、%s でした。",SendingDate )
+	log.Printf(",302,最後に受信したメールの送信日付は、%s でした。",SendingDateNew )
 
-	if ""==SendingDate{
+	if ""==SendingDateNew || "" ==SendingDateOld{
 		log.Println(",303,読み込んだファイルに日時データがありませんでした。" )
-		loc, _ := time.LoadLocation("Asia/Tokyo")
-		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
+		return dummy,dummy,true
 	}
-	tm,hasErr:=setDateTime(SendingDate)
+	new,hasErr:=setDateTime(SendingDateNew)
+	old,hasErr:=setDateTime(SendingDateOld)
 	if hasErr{
-		loc, _ := time.LoadLocation("Asia/Tokyo")
-		return time.Date(1900, 1, 1, 0, 0, 0, 0, loc),true
+		return dummy,dummy,true
 	}
-	return tm,false
+	return new,old,false
 }
