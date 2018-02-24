@@ -1,3 +1,6 @@
+// Copyright (c) 2018 SHIGEMUNE Katsuhiro
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 package  Receiver
 
 //Module:300

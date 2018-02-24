@@ -1,3 +1,6 @@
+// Copyright (c) 2018 SHIGEMUNE Katsuhiro
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 package Verifier
 
 import (
@@ -57,23 +60,23 @@ func TestIsNormalMin(t *testing.T) {
 	}
 }
 
-func TestIsRecvMailPaster(t *testing.T) {
+func TestIsOperationBuoy(t *testing.T) {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 
 	tm := time.Now()
 	tm2:=tm.Add(-(time.Duration(90)*time.Minute))
 
-	actual := isRecvMailPaster(tm2, 90)
-	expected := false
+	actual := isOperationBuoy(tm2, 90)
+	expected := true
 	if actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
 
 	tm = time.Date(2018, 1, 4, 16, 42, 0, 0, loc)
 
-	actual = isRecvMailPaster(tm, 90)
-	expected = true
+	actual = isOperationBuoy(tm, 90)
+	expected = false
 	if actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -104,7 +107,7 @@ func TestIsAlreadySendSettingMail(t *testing.T) {
 	}
 
 	actual = isAlreadySendSettingMail("", true)
-	expected =  true
+	expected =  false
 
 	if actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
@@ -139,14 +142,14 @@ func TestIsLateValue(t *testing.T) {
 	}
 }
 
-func TestisNormalSendingInterval(t *testing.T) {
+func TestisSendingIntervalAbnormal(t *testing.T) {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	old := time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
 	new := time.Date(2018, 2, 21, 12, 30, 0, 0, loc)
 
-	actual:= isNormalSendingInterval(old, new,25)
-	expected := true
+	actual:= isSendingIntervalAbnormal(old, new,25)
+	expected := false
 	if  actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -154,8 +157,8 @@ func TestisNormalSendingInterval(t *testing.T) {
 	old = time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
 	new = time.Date(2018, 2, 21, 12, 15, 0, 0, loc)
 
-	actual= isNormalSendingInterval(old, new,25)
-	expected = false
+	actual= isSendingIntervalAbnormal(old, new,25)
+	expected = true
 	if  actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -167,8 +170,8 @@ func TestIsLateDateTime(t *testing.T) {
 	old := time.Date(2017, 12, 31, 12, 23, 0, 0, loc)
 	new := time.Date(2017, 12, 31, 12, 53, 0, 0, loc)
 	dummy := time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
-	actual,actual2, actual3 := IsLateDateTime("2017-12-31T12:23:21,2017-12-31T12:53:21")
-	expected, expected2, expected3 := old,new,true
+	actual, actual2, actual3 := IsLateDateTime("2017-12-31T12:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 := old, new, true
 	if 0 != actual.Sub(expected) {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -179,8 +182,104 @@ func TestIsLateDateTime(t *testing.T) {
 		t.Errorf("got %v\nwant %v", actual3, expected3)
 	}
 
-	actual,actual2,actual3 = IsLateDateTime("2017/3/21 10:21:00,2017/3/21 10:51:00")
-	expected, expected2,expected3 = dummy,dummy,false
+	actual, actual2, actual3 = IsLateDateTime("2017/3/21 10:21:002017/3/21 10:51:00")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017/3/21 10:21:00,2017/3/21 10:51:00")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-12-31 12:23:21,2017-12-31 12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("10002-12-31T12:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-14-31T12:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-12-39T12:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-12-31T30:23:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-12-31T12:98:21,2017-12-31T12:53:21")
+	expected, expected2, expected3 = dummy, dummy, false
+	if 0 != actual.Sub(expected) {
+		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+	if 0 != actual2.Sub(expected2) {
+		t.Errorf("got %v\nwant %v", actual2, expected2)
+	}
+	if actual3 != expected3 {
+		t.Errorf("got %v\nwant %v", actual3, expected3)
+	}
+
+	actual, actual2, actual3 = IsLateDateTime("2017-12-31T12:23:98,2017-12-31T12:53:82")
+	expected, expected2, expected3 = old, new, true
 	if 0 != actual.Sub(expected) {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
@@ -308,5 +407,21 @@ func TestIsTerminationVoltage(t *testing.T) {
 	expected = false
 	if actual != expected {
 		t.Errorf("got %v\nwant %v", actual, expected)
+	}
+}
+
+func TestGetAdjustmentMin(t *testing.T) {
+
+	var expected int
+	for i:=0;i<60;i++ {
+		actual := getAdjustmentMin(i,55)
+		if  (55-i) > 30 {
+			expected = (55 - i) - 60
+		}else{
+			expected = 55 - i
+		}
+		if actual != expected {
+			t.Errorf("got %v\nwant %v", actual, expected)
+		}
 	}
 }

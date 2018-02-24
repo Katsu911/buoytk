@@ -1,3 +1,6 @@
+// Copyright (c) 2018 SHIGEMUNE Katsuhiro
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 package Verifier
 //Module:200
 import( "time"
@@ -11,16 +14,16 @@ import( "time"
 )
 
 
-func isNormalSendingInterval( old time.Time, new time.Time, ival int)bool{
+func isSendingIntervalAbnormal( old time.Time, new time.Time, ival int)bool{
 
 	duration := new.Sub(old)
 	MailRecvMinInterval := duration / time.Minute
 
 	if ival < (int)(MailRecvMinInterval) {
 		log.Println(",208,最新の受信メールと1つ前の受信メールの送信間隔が短すぎます。(=想定外の時間帯にブイの電源が入ってメール送信した可能性がある。)")
-		return false
+		return true
 	}
-	return true
+	return false
 
 }
 
@@ -119,18 +122,17 @@ func IsLateValue(v int)bool{
 
 
 
-func isRecvMailPaster(MailRecvTime time.Time, PeriodMin int)bool{
+func isOperationBuoy(MailRecvTime time.Time, PeriodMin int)bool{
 
 	duration := time.Since(MailRecvTime)
 	MailRecvMinDiff := duration / time.Minute
 
-	if PeriodMin < (int)(MailRecvMinDiff) {
+	if PeriodMin >= (int)(MailRecvMinDiff) {
 		log.Println(",202,最新のメール受信時間(分)は規定よりも前に送られたものです。(=ブイが稼働していない可能性がある。)")
 		return true
 	}
 	return false
 }
-
 
 func getAdjustmentMin(src int, target int)int{
 
@@ -143,6 +145,7 @@ func getAdjustmentMin(src int, target int)int{
 	if min>30 {
 		min=min-60
 	}
+
 	return min
 }
 
@@ -183,7 +186,7 @@ func isAlreadySendSettingMail(tmstr string, isOK bool)bool {
 
 	now := time.Now()
 	var MailRecvMinDiff int
-	if "" == tmstr {return true} //送信履歴ファイルなし
+	if "" == tmstr {return false} //送信履歴ファイルなし
 	if isOK {
 		RecentRecvMail := strings.Split(tmstr, ",")
 		if 6 <= len(RecentRecvMail) {
@@ -198,13 +201,13 @@ func isAlreadySendSettingMail(tmstr string, isOK bool)bool {
 			day := time.Date(y, mm, d, h, mmm, s, 0, loc)
 			duration := now.Sub(day)
 			MailRecvMinDiff = (int)(duration/time.Minute)
-			if MailRecvMinDiff > MAIL_SENDING_PERIOD_MIN {
+			if MailRecvMinDiff < MAIL_SENDING_PERIOD_MIN {
 				log.Printf(",205,設定メールを送信済みです。%d 分以上間隔をあけて実行してください。\n", MAIL_SENDING_PERIOD_MIN)
-				return false
+				return true
 			}
 		}
 	}
-	return true
+	return false
 }
 
 
@@ -278,17 +281,22 @@ func IsTerminationVoltage(v float64)bool{
 
 func GetSettingsSec(old time.Time, new time.Time, d Settings.Config)(bool, int){
 
-	//最新の受信メールの送信時間は設定変更すべき時間帯(分)のものであるか？
+	//最新の受信メールの送信時間は通常の送信されるべき時間帯(分)のものか？
+	//Yes->何もしない。 No->補正する。
 	isAction := true
 	if isNormalMin(new.Minute(), d.AllowanceMinList){isAction=false}
 
-	//最新のメール受信データが想定よりも過去のメールか？
-	if isRecvMailPaster(new, d.TrialPeriod){isAction=false}
+	//直近の受信メールが古いものでないか？(ブイは稼働しているか？)
+	//No->何もしない。
+	if !isOperationBuoy(new, d.TrialPeriod){isAction=false}
 
-	//受信メールと受信メールの送信間隔が設定値より大きいか？
-	if isNormalSendingInterval(old,new,d.RetransmissionInterval){isAction=false}
+	//受信メールと受信メールの送信間隔は異常か？
+	//(=試験時などイレギュラな電源の入切によるメール送信ではないか？)
+	//Yes->何もしない。
+	if isSendingIntervalAbnormal(old,new,d.RetransmissionInterval){isAction=false}
 
-	//既に設定メールを送っていないか？
+	//既に設定メールを送っている?
+	//Yes->何もしない。
 	//2018,2,4,15,0,0
 	tmstr,isOK:=getRecentFile("SendingHistoryOfSettingMail")
 	if isAlreadySendSettingMail(tmstr,isOK){isAction=false}
