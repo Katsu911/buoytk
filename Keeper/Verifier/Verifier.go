@@ -18,8 +18,8 @@ func isSendingIntervalAbnormal( old time.Time, new time.Time, ival int)bool{
 
 	duration := new.Sub(old)
 	MailRecvMinInterval := duration / time.Minute
-
-	if ival < (int)(MailRecvMinInterval) {
+	log.Printf("min=%d\n",(int)(MailRecvMinInterval))
+	if ival > (int)(MailRecvMinInterval) {
 		log.Println(",208,最新の受信メールと1つ前の受信メールの送信間隔が短すぎます。(=想定外の時間帯にブイの電源が入ってメール送信した可能性がある。)")
 		return true
 	}
@@ -128,9 +128,9 @@ func isOperationBuoy(MailRecvTime time.Time, PeriodMin int)bool{
 	MailRecvMinDiff := duration / time.Minute
 
 	if PeriodMin >= (int)(MailRecvMinDiff) {
-		log.Println(",202,最新のメール受信時間(分)は規定よりも前に送られたものです。(=ブイが稼働していない可能性がある。)")
 		return true
 	}
+	log.Println(",202,最新のメール受信時間(分)は規定よりも前に送られたものです。(=ブイが稼働していない可能性がある。)")
 	return false
 }
 
@@ -279,12 +279,13 @@ func IsTerminationVoltage(v float64)bool{
 	return false
 }
 
-func GetSettingsSec(old time.Time, new time.Time, d Settings.Config)(bool, int){
+func GetSettingsSec(new time.Time, old time.Time, d Settings.Config)(bool, int){
 
 	//最新の受信メールの送信時間は通常の送信されるべき時間帯(分)のものか？
 	//Yes->何もしない。 No->補正する。
 	isAction := true
-	if isNormalMin(new.Minute(), d.AllowanceMinList){
+	t,_ := strconv.Atoi(new.Format("04"))
+	if isNormalMin(t, d.AllowanceMinList){
 		log.Println(",208,isNormalMin->true ActionFlag:false")
 	isAction=false
 	}else{

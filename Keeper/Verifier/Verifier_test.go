@@ -66,7 +66,7 @@ func TestIsOperationBuoy(t *testing.T) {
 
 	tm := time.Now()
 	tm2:=tm.Add(-(time.Duration(90)*time.Minute))
-
+	//90分前に届いた(稼働している)
 	actual := isOperationBuoy(tm2, 90)
 	expected := true
 	if actual != expected {
@@ -74,7 +74,7 @@ func TestIsOperationBuoy(t *testing.T) {
 	}
 
 	tm = time.Date(2018, 1, 4, 16, 42, 0, 0, loc)
-
+	//受信日時が古すぎる
 	actual = isOperationBuoy(tm, 90)
 	expected = false
 	if actual != expected {
@@ -142,11 +142,11 @@ func TestIsLateValue(t *testing.T) {
 	}
 }
 
-func TestisSendingIntervalAbnormal(t *testing.T) {
+func TestIsSendingIntervalAbnormal(t *testing.T) {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	old := time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
-	new := time.Date(2018, 2, 21, 12, 30, 0, 0, loc)
+	new := time.Date(2018, 2, 21, 12, 25, 0, 0, loc)
 
 	actual:= isSendingIntervalAbnormal(old, new,25)
 	expected := false
@@ -155,7 +155,7 @@ func TestisSendingIntervalAbnormal(t *testing.T) {
 	}
 
 	old = time.Date(2018, 2, 21, 12, 00, 0, 0, loc)
-	new = time.Date(2018, 2, 21, 12, 15, 0, 0, loc)
+	new = time.Date(2018, 2, 21, 12, 24, 0, 0, loc)
 
 	actual= isSendingIntervalAbnormal(old, new,25)
 	expected = true

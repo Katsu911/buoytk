@@ -155,6 +155,9 @@ func GetRecentMailDateTime() (time.Time,time.Time,bool){
 		return dummy,dummy,true
 	}
 	new,hasErr:=setDateTime(SendingDateNew)
+	if hasErr{
+		return dummy,dummy,true
+	}
 	old,hasErr:=setDateTime(SendingDateOld)
 	if hasErr{
 		return dummy,dummy,true
