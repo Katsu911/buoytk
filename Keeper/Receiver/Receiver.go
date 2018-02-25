@@ -34,6 +34,21 @@ func Month2Number(mon string) int{
 	return month
 }
 
+var path string
+
+func exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+func SetMailPath(p string)bool{
+	if exists(p) {
+		path = p
+		return true
+	}
+	return false
+}
+
 func setDateTime(dt string) (time.Time,bool){
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	dummy:= time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
@@ -87,11 +102,7 @@ func setDateTime(dt string) (time.Time,bool){
 	return time.Date(d1, time.Month(d2), d3, t1, t2, 0, 0, loc),false
 }
 
-// Readln returns a single line (without the ending \n)
-// from the input buffered reader.
-// An error is returned iff there is an error with the
-// buffered reader.
-func Readln(r *bufio.Reader) (string, error) {
+func readln(r *bufio.Reader) (string, error) {
 	var (
 		isPrefix bool  = true
 		err      error = nil
@@ -112,14 +123,14 @@ func newFile(fn string) *os.File {
 	return fp
 }
 
-func GetRecentMailDateTime(path string) (time.Time,time.Time,bool){
+func GetRecentMailDateTime() (time.Time,time.Time,bool){
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	dummy := time.Date(1900, 1, 1, 0, 0, 0, 0, loc)
 	fp := newFile(path)
 	defer fp.Close()
 	reader := bufio.NewReader(fp)
-	str, err := Readln(reader)
+	str, err := readln(reader)
 	SendingDateNew :=""
 	SendingDateOld :=""
 	if err != nil {
@@ -127,7 +138,7 @@ func GetRecentMailDateTime(path string) (time.Time,time.Time,bool){
 	}
 	for err == nil {
 		//fmt.Println(str)
-		str, err = Readln(reader)
+		str, err = readln(reader)
 		if 5 <= len(str) {
 			if "Date:" == str[0:5] {
 				//Date: Thu, 1 Feb 2018 18:58:57 +0900

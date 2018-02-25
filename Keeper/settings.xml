@@ -20,12 +20,14 @@
         <!-- 許容する送信予定分のリスト -->
         <allowance_min_list></allowance_min_list>
         <!-- 現在時刻と受信メールの時間がどの程度(分)ずれている場合に処理を行うか？ -->
-        <trial_period></trial_period>
+        <recent_recv_period></recent_recv_period>
         <!-- 必要な受信メール間の送信間隔(分) -->
-        <retransmission_interval></retransmission_interval>
+        <tx_interval></tx_interval>
         <!-- 受信メールのテキストファイルが保存されているファイルパス -->
         <!--(例) /user/maildata (Linux)-->
         <!--(例) C:\Users\test\maildata (Windows)-->        
         <mailtext_path></mailtext_path>
+        <!-- ログ保管用フォルダパス -->
+        <logfolder_path></logfolder_path>
     </Config>
 </Settings>

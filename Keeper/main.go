@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"fmt"
 	"time"
+	"os"
 )
 
 var (
@@ -35,9 +36,28 @@ var (
 	TimeOpt  = flag.Bool("time", false, "timeオプション：システムから正常な時間が得られるかを確認する。: 例) -time")
 )
 
+func getDateString()string{
+	t:=time.Now()
+	return strconv.Itoa(t.Year()) + strconv.Itoa((int)(t.Month())) + strconv.Itoa(t.Day())
+}
+
 func main() {
 
-	Settings.ReadSettingsFile()
+	hasSettingsFileError := false
+	if !Settings.ReadSettingsFile(){hasSettingsFileError=true}
+
+	logfile, err := os.OpenFile(Settings.SettingsXml.Config.LogFolderPath +"/" + getDateString() + ".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		panic("cannnot open test.log:" + err.Error())
+	}
+	defer logfile.Close()
+
+	log.SetOutput(logfile)
+
+	if hasSettingsFileError{
+		log.Println(",027,設定ファイルに不備があるため実行できませんでした。")
+		return
+	}
 
 	flag.Parse()
 	if -1 != *ChangeOpt {
@@ -48,7 +68,11 @@ func main() {
 			log.Println(",002,送信間隔変更の設定が実行できませんでした。")
 		}
 	} else if *LateOpt {
-		NewDT,OldDT,hasErr := Receiver.GetRecentMailDateTime(Settings.SettingsXml.Config.MailtextPath)
+		if !Receiver.SetMailPath(Settings.SettingsXml.Config.MailtextPath) {
+			log.Println(",004,遅延補正が実行できませんでした。")
+			return
+		}
+		NewDT,OldDT,hasErr := Receiver.GetRecentMailDateTime()
 		if hasErr {
 			log.Println(",004,遅延補正が実行できませんでした。")
 			return

@@ -284,22 +284,45 @@ func GetSettingsSec(old time.Time, new time.Time, d Settings.Config)(bool, int){
 	//最新の受信メールの送信時間は通常の送信されるべき時間帯(分)のものか？
 	//Yes->何もしない。 No->補正する。
 	isAction := true
-	if isNormalMin(new.Minute(), d.AllowanceMinList){isAction=false}
+	if isNormalMin(new.Minute(), d.AllowanceMinList){
+		log.Println(",208,isNormalMin->true ActionFlag:false")
+	isAction=false
+	}else{
+		log.Println(",209,isNormalMin->false ActionFlag:true")
+	}
 
 	//直近の受信メールが古いものでないか？(ブイは稼働しているか？)
 	//No->何もしない。
-	if !isOperationBuoy(new, d.TrialPeriod){isAction=false}
+	if !isOperationBuoy(new, d.RecentRecvPeriod){
+		log.Println(",210,isOperationBuoy->false ActionFlag:false")
+		isAction=false
+	}else{
+		log.Println(",211,isOperationBuoy->true ActionFlag:true")
+	}
 
 	//受信メールと受信メールの送信間隔は異常か？
 	//(=試験時などイレギュラな電源の入切によるメール送信ではないか？)
 	//Yes->何もしない。
-	if isSendingIntervalAbnormal(old,new,d.RetransmissionInterval){isAction=false}
+	if isSendingIntervalAbnormal(old,new,d.TxInterval){
+		log.Println(",212,isSendingIntervalAbnormal->true ActionFlag:false")
+		isAction=false
+	}else{
+		log.Println(",213,isSendingIntervalAbnormal->false ActionFlag:true")
+	}
 
 	//既に設定メールを送っている?
 	//Yes->何もしない。
 	//2018,2,4,15,0,0
 	tmstr,isOK:=getRecentFile("SendingHistoryOfSettingMail")
-	if isAlreadySendSettingMail(tmstr,isOK){isAction=false}
+	if isAlreadySendSettingMail(tmstr,isOK){
+		log.Println(",214,isAlreadySendSettingMail->true ActionFlag:false")
+		isAction=false
+	}else{
+		log.Println(",215,isAlreadySendSettingMail->false ActionFlag:true")
+	}
 
-	return isAction,getAdjustmentMin(new.Minute(),d.SendMin)*60
+	sec:=getAdjustmentMin(new.Minute(),d.SendMin)*60
+	log.Printf(",216,isAction=%t, AdjustmentSec=%d \n",isAction,sec)
+
+	return isAction,sec
 }
