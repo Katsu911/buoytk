@@ -142,8 +142,10 @@ func GetRecentMailDateTime() (time.Time,time.Time,bool){
 		if 5 <= len(str) {
 			if "Date:" == str[0:5] {
 				//Date: Thu, 1 Feb 2018 18:58:57 +0900
-				SendingDateOld = SendingDateNew
-				SendingDateNew = str
+				if str!=SendingDateNew {	//同じメールが2通以上ある場合は無視する。
+					SendingDateOld = SendingDateNew
+					SendingDateNew = str
+				}
 			}
 		}
 	}

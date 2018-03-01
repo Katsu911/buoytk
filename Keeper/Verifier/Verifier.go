@@ -18,7 +18,6 @@ func isSendingIntervalAbnormal( old time.Time, new time.Time, ival int)bool{
 
 	duration := new.Sub(old)
 	MailRecvMinInterval := duration / time.Minute
-	log.Printf("min=%d\n",(int)(MailRecvMinInterval))
 	if ival > (int)(MailRecvMinInterval) {
 		log.Println(",208,最新の受信メールと1つ前の受信メールの送信間隔が短すぎます。(=想定外の時間帯にブイの電源が入ってメール送信した可能性がある。)")
 		return true
@@ -182,7 +181,7 @@ func getRecentFile(f string)(string, bool){
 
 func isAlreadySendSettingMail(tmstr string, isOK bool)bool {
 
-	const MAIL_SENDING_PERIOD_MIN= 90
+	const MAIL_SENDING_PERIOD_MIN= 120
 
 	now := time.Now()
 	var MailRecvMinDiff int

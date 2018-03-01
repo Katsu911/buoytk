@@ -96,7 +96,7 @@ func TestIsAlreadySendSettingMail(t *testing.T) {
 		t.Errorf("got %v\nwant %v", actual, expected)
 	}
 
-	tm2 =tm.Add(-(time.Duration(120)*time.Minute))
+	tm2 =tm.Add(-(time.Duration(121)*time.Minute))
 	str = fmt.Sprintf("%d,%d,%d,%d,%d,%d", tm2.Year(),tm2.Month(),tm2.Day(),tm2.Hour(),tm2.Minute(),tm2.Second())
 
 	actual = isAlreadySendSettingMail(str, true)
